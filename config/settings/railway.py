@@ -48,20 +48,41 @@ DB_PASSWORD = os.environ.get('PGPASSWORD') or os.environ.get('DB_PASSWORD', '')
 DB_PORT = os.environ.get('PGPORT') or os.environ.get('DB_PORT', '5432')
 
 print(f"=== DATABASE DEBUG ===")
-print(f"DATABASE_URL: {DATABASE_URL is not None}")
-print(f"DB_NAME: {DB_NAME}")
-print(f"DB_USER: {DB_USER}")
-print(f"DB_HOST: {postgres_host}")
-print(f"DB_PORT: {DB_PORT}")
+print(f"DATABASE_URL exists: {DATABASE_URL is not None}")
+if DATABASE_URL:
+    print(f"DATABASE_URL length: {len(DATABASE_URL)}")
+    # Безопасно показываем начало и конец URL
+    if len(DATABASE_URL) > 20:
+        print(f"DATABASE_URL preview: {DATABASE_URL[:20]}...{DATABASE_URL[-20:]}")
+    else:
+        print(f"DATABASE_URL: {DATABASE_URL}")
+print(f"DB_NAME: '{DB_NAME}'")
+print(f"DB_USER: '{DB_USER}'")
+print(f"DB_HOST: '{postgres_host}'")
+print(f"DB_PORT: '{DB_PORT}'")
 print(f"===================")
 
 if DATABASE_URL and DATABASE_URL.strip() and 'postgresql://' in DATABASE_URL:
     try:
         import dj_database_url
-        DATABASES = {
-            'default': dj_database_url.parse(DATABASE_URL)
-        }
-        print(f"Используем DATABASE_URL с хостом: {DATABASES['default']['HOST']}")
+        parsed_db = dj_database_url.parse(DATABASE_URL)
+        print(f"Parsed DATABASE_URL:")
+        print(f"  ENGINE: {parsed_db.get('ENGINE', 'NOT SET')}")
+        print(f"  NAME: '{parsed_db.get('NAME', 'NOT SET')}'")
+        print(f"  USER: '{parsed_db.get('USER', 'NOT SET')}'")
+        print(f"  HOST: '{parsed_db.get('HOST', 'NOT SET')}'")
+        print(f"  PORT: '{parsed_db.get('PORT', 'NOT SET')}'")
+        
+        # Проверяем что все важные поля заполнены
+        if parsed_db.get('NAME') and parsed_db.get('USER') and parsed_db.get('HOST'):
+            DATABASES = {
+                'default': parsed_db
+            }
+            print(f"✅ Используем DATABASE_URL")
+        else:
+            print(f"❌ DATABASE_URL неполный, используем fallback")
+            raise ValueError("Incomplete DATABASE_URL")
+            
     except (ValueError, ImportError) as e:
         print(f"Error parsing DATABASE_URL: {e}")
         # Fallback к отдельным переменным
@@ -75,6 +96,7 @@ if DATABASE_URL and DATABASE_URL.strip() and 'postgresql://' in DATABASE_URL:
                 'PORT': DB_PORT,
             }
         }
+        print(f"✅ Используем отдельные переменные")
 else:
     # Используем отдельные переменные PostgreSQL
     DATABASES = {
@@ -89,8 +111,13 @@ else:
     }
 
 # Проверяем что у нас есть все необходимые данные
-if not DATABASES['default']['NAME']:
-    raise ValueError("Database NAME is required! Set PGDATABASE or DB_NAME environment variable.")
+final_db_name = DATABASES['default'].get('NAME', '')
+if not final_db_name or final_db_name.strip() == '':
+    print(f"WARNING: Database NAME is empty after parsing!")
+    print(f"Raw DATABASE_URL: {DATABASE_URL}")
+    # Принудительно устанавливаем имя базы
+    DATABASES['default']['NAME'] = DB_NAME or 'railway'
+    print(f"Set database name to: {DATABASES['default']['NAME']}")
 
 print(f"Django подключается к БД на хосте: {DATABASES['default']['HOST']}")
 print(f"База данных: {DATABASES['default']['NAME']}")
