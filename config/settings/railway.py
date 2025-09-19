@@ -41,6 +41,20 @@ def get_postgres_host():
 
 postgres_host = get_postgres_host()
 
+# Получаем данные базы данных с fallback значениями
+DB_NAME = os.environ.get('PGDATABASE') or os.environ.get('DB_NAME', 'railway')
+DB_USER = os.environ.get('PGUSER') or os.environ.get('DB_USER', 'postgres')
+DB_PASSWORD = os.environ.get('PGPASSWORD') or os.environ.get('DB_PASSWORD', '')
+DB_PORT = os.environ.get('PGPORT') or os.environ.get('DB_PORT', '5432')
+
+print(f"=== DATABASE DEBUG ===")
+print(f"DATABASE_URL: {DATABASE_URL is not None}")
+print(f"DB_NAME: {DB_NAME}")
+print(f"DB_USER: {DB_USER}")
+print(f"DB_HOST: {postgres_host}")
+print(f"DB_PORT: {DB_PORT}")
+print(f"===================")
+
 if DATABASE_URL and DATABASE_URL.strip() and 'postgresql://' in DATABASE_URL:
     try:
         import dj_database_url
@@ -54,11 +68,11 @@ if DATABASE_URL and DATABASE_URL.strip() and 'postgresql://' in DATABASE_URL:
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
-                'NAME': os.environ.get('PGDATABASE', 'railway'),
-                'USER': os.environ.get('PGUSER', 'postgres'),
-                'PASSWORD': os.environ.get('PGPASSWORD', ''),
+                'NAME': DB_NAME,
+                'USER': DB_USER,
+                'PASSWORD': DB_PASSWORD,
                 'HOST': postgres_host,
-                'PORT': os.environ.get('PGPORT', '5432'),
+                'PORT': DB_PORT,
             }
         }
 else:
@@ -66,13 +80,17 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('PGDATABASE', 'railway'),
-            'USER': os.environ.get('PGUSER', 'postgres'),  
-            'PASSWORD': os.environ.get('PGPASSWORD', ''),
+            'NAME': DB_NAME,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASSWORD,
             'HOST': postgres_host,
-            'PORT': os.environ.get('PGPORT', '5432'),
+            'PORT': DB_PORT,
         }
     }
+
+# Проверяем что у нас есть все необходимые данные
+if not DATABASES['default']['NAME']:
+    raise ValueError("Database NAME is required! Set PGDATABASE or DB_NAME environment variable.")
 
 print(f"Django подключается к БД на хосте: {DATABASES['default']['HOST']}")
 print(f"База данных: {DATABASES['default']['NAME']}")
