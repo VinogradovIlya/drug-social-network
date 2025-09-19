@@ -1,0 +1,107 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Мои питомцы - Pet Social Network{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2rem 0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1>Мои питомцы</h1>
+        <a href="{% url 'frontend:pet_create' %}" class="btn btn-primary">
+            Добавить питомца
+        </a>
+    </div>
+    
+    {% if pets %}
+        <div class="grid grid--3">
+            {% for pet in pets %}
+                <div class="pet-card">
+                    {% if pet.main_photo %}
+                        <img src="{{ pet.main_photo.url }}" alt="{{ pet.name }}" class="pet-card__image">
+                    {% else %}
+                        <div class="pet-card__image" style="display: flex; align-items: center; justify-content: center; font-size: 4rem; color: white;">
+                            {% if pet.breed.species == 'dog' %}🐕
+                            {% elif pet.breed.species == 'cat' %}🐱
+                            {% elif pet.breed.species == 'bird' %}🐦
+                            {% elif pet.breed.species == 'fish' %}🐠
+                            {% elif pet.breed.species == 'rodent' %}🐹
+                            {% elif pet.breed.species == 'reptile' %}🦎
+                            {% else %}🐾
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="pet-card__body">
+                        <h3 class="pet-card__name">{{ pet.name }}</h3>
+                        <p class="pet-card__breed">{{ pet.breed }}</p>
+                        
+                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                            <div>Возраст: {{ pet.age_in_years }} лет</div>
+                            {% if pet.weight %}
+                                <div>Вес: {{ pet.weight }} кг</div>
+                            {% endif %}
+                            <div>Пол: {{ pet.get_gender_display }}</div>
+                        </div>
+                        
+                        <div class="pet-card__actions">
+                            <a href="{% url 'frontend:pet_edit' pet.id %}" class="btn btn-secondary" style="flex: 1;">
+                                Редактировать
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state__icon">🐾</div>
+            <h2 class="empty-state__title">У вас пока нет питомцев</h2>
+            <p>Добавьте своего первого питомца, чтобы начать!</p>
+            <a href="{% url 'frontend:pet_create' %}" class="btn btn-primary" style="margin-top: 1rem;">
+                Добавить питомца
+            </a>
+        </div>
+    {% endif %}
+    
+    <!-- Посты пользователя -->
+    <div style="margin-top: 3rem;">
+        <h2 style="margin-bottom: 1.5rem;">Мои посты</h2>
+        
+        {% if user_posts %}
+            <div class="user-posts">
+                {% for post in user_posts %}
+                    <article class="post-card">
+                        <div class="post-card__content">
+                            <p class="post-content">{{ post.content }}</p>
+                            <div class="post-meta">
+                                <time class="post-date">{{ post.created_at|date:"d.m.Y H:i" }}</time>
+                                <div class="post-stats">
+                                    <span>👍 {{ post.likes_count }}</span>
+                                    <span>👎 {{ post.dislikes_count }}</span>
+                                    <span>💬 {{ post.comments_count_actual }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+            
+            {% if user_posts|length >= 5 %}
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <a href="{% url 'frontend:user_posts' user.id %}" class="btn btn-secondary">
+                        Посмотреть все посты
+                    </a>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state__icon">📝</div>
+                <h3 class="empty-state__title">Вы еще не написали ни одного поста</h3>
+                <p>Поделитесь новостями о ваших питомцах с сообществом!</p>
+                <a href="{% url 'frontend:posts_feed' %}" class="btn btn-primary" style="margin-top: 1rem;">
+                    Написать пост
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
