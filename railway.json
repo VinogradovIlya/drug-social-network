@@ -1,8 +1,8 @@
 {
   "build": {
-    "command": "pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate"
+    "command": "pip install --no-cache-dir -r requirements.txt"
   },
   "start": {
-    "command": "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --log-level error"
+    "command": "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --log-level error"
   }
 }
