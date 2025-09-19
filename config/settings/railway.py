@@ -14,9 +14,32 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
 ]
 
-# База данных для Railway
-# Railway предоставляет переменные автоматически
-DATABASE_URL = os.environ.get('DATABASE_URL')
+# База данных для Railway - определяем правильный хост автоматически
+DATABASE_URL = os.environ.get('DATABASE_PRIVATE_URL') or os.environ.get('DATABASE_URL')
+
+# Определяем хост для PostgreSQL в Railway
+def get_postgres_host():
+    """Определяет правильный хост для PostgreSQL в Railway"""
+    # Проверяем есть ли приватный домен
+    private_host = os.environ.get('RAILWAY_PRIVATE_DOMAIN')
+    if private_host:
+        return private_host
+    
+    # Проверяем стандартные имена сервисов Railway
+    possible_hosts = ['postgres', 'postgresql', 'database']
+    for host in possible_hosts:
+        if os.environ.get(f'{host.upper()}_HOST'):
+            return os.environ.get(f'{host.upper()}_HOST')
+    
+    # Если ничего не найдено, пытаемся извлечь из PGHOST
+    pghost = os.environ.get('PGHOST', '')
+    if pghost and pghost not in ['localhost', '127.0.0.1']:
+        return pghost
+    
+    # Последний шанс - стандартное имя сервиса
+    return 'postgres'
+
+postgres_host = get_postgres_host()
 
 if DATABASE_URL and DATABASE_URL.strip() and 'postgresql://' in DATABASE_URL:
     try:
@@ -24,29 +47,29 @@ if DATABASE_URL and DATABASE_URL.strip() and 'postgresql://' in DATABASE_URL:
         DATABASES = {
             'default': dj_database_url.parse(DATABASE_URL)
         }
-        print(f"Используем DATABASE_URL: {DATABASE_URL[:50]}...")
+        print(f"Используем DATABASE_URL с хостом: {DATABASES['default']['HOST']}")
     except (ValueError, ImportError) as e:
         print(f"Error parsing DATABASE_URL: {e}")
-        # Fallback
+        # Fallback к отдельным переменным
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
                 'NAME': os.environ.get('PGDATABASE', 'railway'),
                 'USER': os.environ.get('PGUSER', 'postgres'),
                 'PASSWORD': os.environ.get('PGPASSWORD', ''),
-                'HOST': os.environ.get('PGHOST', 'localhost'),  # Railway установит правильный хост
+                'HOST': postgres_host,
                 'PORT': os.environ.get('PGPORT', '5432'),
             }
         }
 else:
-    # Используем отдельные переменные PostgreSQL от Railway
+    # Используем отдельные переменные PostgreSQL
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.environ.get('PGDATABASE', 'railway'),
             'USER': os.environ.get('PGUSER', 'postgres'),  
             'PASSWORD': os.environ.get('PGPASSWORD', ''),
-            'HOST': os.environ.get('PGHOST', 'localhost'),  # Railway должен установить правильный хост
+            'HOST': postgres_host,
             'PORT': os.environ.get('PGPORT', '5432'),
         }
     }
