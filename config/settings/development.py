@@ -11,7 +11,6 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '0.0.0.0',
     'web',  # имя сервиса в Docker
-    '*.ngrok-free.app',
     '*.ngrok.io',  # для тестирования с мобильных устройств
 ]
 
@@ -72,5 +71,12 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # Логирование для разработки (более подробное)
-LOGGING['root']['level'] = 'DEBUG'
-LOGGING['loggers']['django']['level'] = 'DEBUG'
+# LOGGING['root']['level'] = 'DEBUG'
+# LOGGING['loggers']['django']['level'] = 'DEBUG'
+# Логирование для разработки (более подробное)
+if 'loggers' not in LOGGING:
+    LOGGING['loggers'] = {}
+if 'django' not in LOGGING['loggers']:
+    LOGGING['loggers']['django'] = {'handlers': ['console'], 'level': 'DEBUG', 'propagate': False}
+else:
+    LOGGING['loggers']['django']['level'] = 'DEBUG'
