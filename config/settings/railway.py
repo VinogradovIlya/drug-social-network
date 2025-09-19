@@ -1,5 +1,5 @@
 """
-Railway deployment settings - Fixed version.
+Railway deployment settings.
 """
 
 from .base import *
@@ -15,43 +15,45 @@ ALLOWED_HOSTS = [
 ]
 
 # База данных для Railway
-# Railway может предоставлять переменные по-разному
+# Railway предоставляет переменные автоматически
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
-if DATABASE_URL and DATABASE_URL.strip():
+if DATABASE_URL and DATABASE_URL.strip() and 'postgresql://' in DATABASE_URL:
     try:
         import dj_database_url
         DATABASES = {
             'default': dj_database_url.parse(DATABASE_URL)
         }
-    except (ValueError, ImportError):
-        # Fallback если dj_database_url не работает
+        print(f"Используем DATABASE_URL: {DATABASE_URL[:50]}...")
+    except (ValueError, ImportError) as e:
+        print(f"Error parsing DATABASE_URL: {e}")
+        # Fallback
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
                 'NAME': os.environ.get('PGDATABASE', 'railway'),
                 'USER': os.environ.get('PGUSER', 'postgres'),
                 'PASSWORD': os.environ.get('PGPASSWORD', ''),
-                'HOST': os.environ.get('PGHOST', 'localhost'),
+                'HOST': os.environ.get('PGHOST', 'localhost'),  # Railway установит правильный хост
                 'PORT': os.environ.get('PGPORT', '5432'),
             }
         }
 else:
-    # Используем отдельные переменные PostgreSQL
+    # Используем отдельные переменные PostgreSQL от Railway
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.environ.get('PGDATABASE', 'railway'),
             'USER': os.environ.get('PGUSER', 'postgres'),  
             'PASSWORD': os.environ.get('PGPASSWORD', ''),
-            'HOST': os.environ.get('PGHOST', 'localhost'),
+            'HOST': os.environ.get('PGHOST', 'localhost'),  # Railway должен установить правильный хост
             'PORT': os.environ.get('PGPORT', '5432'),
-            'CONN_MAX_AGE': 600,
-            'OPTIONS': {
-                'sslmode': 'prefer',
-            },
         }
     }
+
+print(f"Django подключается к БД на хосте: {DATABASES['default']['HOST']}")
+print(f"База данных: {DATABASES['default']['NAME']}")
+print(f"Пользователь: {DATABASES['default']['USER']}")
 
 # Статические файлы
 STATIC_URL = '/static/'
