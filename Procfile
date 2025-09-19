@@ -1,1 +1,1 @@
-web: python scripts/wait_for_db.py && python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --log-level error
+web: mkdir -p /app/staticfiles && python manage.py wait_for_db --timeout=60 && python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --log-level error

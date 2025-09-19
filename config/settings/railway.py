@@ -81,11 +81,19 @@ print(f"Пользователь: {DATABASES['default']['USER']}")
 # Статические файлы
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Убеждаемся что папка staticfiles существует
+import os
+os.makedirs(STATIC_ROOT, exist_ok=True)
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media файлы
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Убеждаемся что папка media существует
+os.makedirs(MEDIA_ROOT, exist_ok=True)
 
 # Добавляем WhiteNoise в middleware если его нет
 if 'whitenoise.middleware.WhiteNoiseMiddleware' not in MIDDLEWARE:
