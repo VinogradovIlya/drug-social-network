@@ -39,3 +39,7 @@ TgCrypto==1.2.5
 tzdata==2025.2
 uritemplate==4.2.0
 urllib3==2.5.0
+
+gunicorn==23.0.0
+dj-database-url==2.1.0
+whitenoise==6.8.2

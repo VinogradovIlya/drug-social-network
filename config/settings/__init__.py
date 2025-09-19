@@ -7,7 +7,10 @@ import os
 
 environment = os.environ.get('DJANGO_ENVIRONMENT', 'development')
 
-if environment == 'production':
+# Проверяем Railway
+if os.environ.get('RAILWAY_ENVIRONMENT'):
+    from .railway import *
+elif environment == 'production':
     from .production import *
 elif environment == 'testing':
     from .testing import *
